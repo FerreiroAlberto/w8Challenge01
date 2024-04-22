@@ -11,13 +11,29 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
+let loggedUsers: CreateUserDto[] = [];
+
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
+  @Post('register')
+  register(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
+  }
+
+  @Post('login')
+  async login(@Body() data: CreateUserDto) {
+    const email = data.email;
+    const pass = data.password;
+    console.log(data);
+    const password = await this.usersService.searchByEmail(email);
+    if (pass !== password) {
+      throw new Error('Wrong credentials');
+    }
+    const loggedUser = { email: email, password: pass };
+    loggedUsers = [...loggedUsers, loggedUser];
+    return { message: 'Login successful', user: loggedUser };
   }
 
   @Get()

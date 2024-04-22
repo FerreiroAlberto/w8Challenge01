@@ -33,9 +33,9 @@ enum Role {
 
 model Pet {
 id String @id @default(uuid())
-nombre String  @unique
-tipo String
-edad Int
+name String  @unique
+species String
+age Int
 user User @relation(fields: [userId], references: [id])
 userId String
 

@@ -1,3 +1,5 @@
+import { Pet } from 'src/pets/entities/pet.entity';
+
 export type Role = 'admin' | 'user' | 'guest';
 
 export class User {
@@ -7,4 +9,5 @@ export class User {
   role: Role;
   createdAt: Date;
   updatedAt: Date;
+  pets: Pet[];
 }
