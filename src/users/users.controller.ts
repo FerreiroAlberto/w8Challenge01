@@ -11,11 +11,17 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
-let loggedUsers: CreateUserDto[] = [];
-
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+  loggedUsers = this.usersService.loggedUsers;
+  getLogged() {
+    return this.loggedUsers;
+  }
+
+  isUserLogged(email: string): boolean {
+    return this.loggedUsers.some((user) => user.email === email);
+  }
 
   @Post('register')
   register(@Body() createUserDto: CreateUserDto) {
@@ -31,9 +37,20 @@ export class UsersController {
     if (pass !== password) {
       throw new Error('Wrong credentials');
     }
+    if (this.isUserLogged(email)) {
+      return { message: 'User already logged in', user: { email } };
+    }
     const loggedUser = { email: email, password: pass };
-    loggedUsers = [...loggedUsers, loggedUser];
+    this.usersService.loggedUsers = [...this.loggedUsers, loggedUser];
     return { message: 'Login successful', user: loggedUser };
+  }
+
+  @Post('logout')
+  logout(@Body() data: CreateUserDto) {
+    const email = data.email;
+    this.usersService.loggedUsers = this.loggedUsers.filter(
+      (user) => user.email !== email,
+    );
   }
 
   @Get()

@@ -6,6 +6,12 @@ import { PrismaService } from 'src/prisma/prisma.service';
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
+  loggedUsers: CreateUserDto[] = [];
+
+  isUserLogged(email: string): boolean {
+    return this.loggedUsers.some((user) => user.email === email);
+  }
+
   async create(data: CreateUserDto) {
     return this.prisma.user.create({
       data,
