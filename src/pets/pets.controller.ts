@@ -9,12 +9,14 @@ import {
   UsePipes,
   ValidationPipe,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { PetsService } from './pets.service';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
 import { UsersService } from 'src/users/users.service';
 import { AuthGuard } from 'src/core/auth.guard';
+import { AuthInterceptor } from 'src/core/auth.interceptor';
 
 @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
 @UseGuards(AuthGuard)
@@ -39,12 +41,12 @@ export class PetsController {
   findOne(@Param('id') id: string) {
     return this.petsService.findOne(id);
   }
-
+  @UseInterceptors(AuthInterceptor)
   @Patch(':id')
   async update(@Param('id') id: string, @Body() data: UpdatePetDto) {
     return this.petsService.update(id, data);
   }
-
+  @UseInterceptors(AuthInterceptor)
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.petsService.remove(id);

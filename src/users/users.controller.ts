@@ -43,21 +43,6 @@ export class UsersController {
     return { token };
   }
 
-  // @Get('login')
-  // async tokenLogin(@Headers('Authorization') auth: string) {
-  //   const secret = process.env.SECRET_JWT;
-  //   const token = auth.split('')[1];
-  //   if (!auth) {
-  //     throw new BadRequestException('Email and password required');
-  //   }
-  //   try {
-  //     const payload = await this.jwt.verifyAsync(token, {
-  //       secret,
-  //     });
-  //     return payload;
-  //   } catch {}
-  // }
-
   @Post('register')
   async register(@Body() data: CreateUserDto) {
     data.password = await this.crypto.hash(data.password);
