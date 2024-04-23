@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -6,7 +10,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
 const select = {
   id: true,
   email: true,
-  password: true,
   role: true,
   pets: { select: { name: true, species: true, age: true } },
 };
@@ -14,11 +17,6 @@ const select = {
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
-  loggedUsers: CreateUserDto[] = [];
-
-  isUserLogged(email: string): boolean {
-    return this.loggedUsers.some((user) => user.email === email);
-  }
 
   async create(data: CreateUserDto) {
     return this.prisma.user.create({
@@ -44,16 +42,21 @@ export class UsersService {
     return user;
   }
 
-  async searchByEmail(email: string) {
+  async findForLogin(email: string) {
     const user = await this.prisma.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        role: true,
+        password: true,
+      },
     });
 
     if (!user) {
-      throw new NotFoundException(`User ${email} not found`);
+      throw new ForbiddenException('Invalid input');
     }
 
-    return user.password;
+    return user;
   }
 
   async update(id: string, data: UpdateUserDto) {

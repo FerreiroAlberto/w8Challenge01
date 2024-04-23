@@ -6,51 +6,62 @@ import {
   Patch,
   Param,
   Delete,
+  BadRequestException,
+  ForbiddenException,
+  ValidationPipe,
+  UsePipes,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CryptoService } from 'src/core/crypto.service';
+import { JwtService } from '@nestjs/jwt';
 
+@UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
-  loggedUsers = this.usersService.loggedUsers;
-  getLogged() {
-    return this.loggedUsers;
-  }
-
-  isUserLogged(email: string): boolean {
-    return this.loggedUsers.some((user) => user.email === email);
-  }
-
-  @Post('register')
-  register(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
-  }
-
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly crypto: CryptoService,
+    private readonly jwt: JwtService,
+  ) {}
   @Post('login')
   async login(@Body() data: CreateUserDto) {
-    const email = data.email;
-    const pass = data.password;
-    console.log(data);
-    const password = await this.usersService.searchByEmail(email);
-    if (pass !== password) {
-      throw new Error('Wrong credentials');
+    const secret = process.env.SECRET_JWT;
+    const { email, password } = data;
+    if (!email || !password) {
+      throw new BadRequestException('Email and password required');
     }
-    if (this.isUserLogged(email)) {
-      return { message: 'User already logged in', user: { email } };
+    const user = await this.usersService.findForLogin(email);
+    if (!(await this.crypto.compare(user.password, password))) {
+      throw new ForbiddenException('Invalid input');
     }
-    const loggedUser = { email: email, password: pass };
-    this.usersService.loggedUsers = [...this.loggedUsers, loggedUser];
-    return { message: 'Login successful', user: loggedUser };
+    const token = await this.jwt.signAsync(
+      { id: user.id, role: user.role },
+      { secret: secret },
+    );
+    return { token };
   }
 
-  @Post('logout')
-  logout(@Body() data: CreateUserDto) {
-    const email = data.email;
-    this.usersService.loggedUsers = this.loggedUsers.filter(
-      (user) => user.email !== email,
-    );
+  // @Get('login')
+  // async tokenLogin(@Headers('Authorization') auth: string) {
+  //   const secret = process.env.SECRET_JWT;
+  //   const token = auth.split('')[1];
+  //   if (!auth) {
+  //     throw new BadRequestException('Email and password required');
+  //   }
+  //   try {
+  //     const payload = await this.jwt.verifyAsync(token, {
+  //       secret,
+  //     });
+  //     return payload;
+  //   } catch {}
+  // }
+
+  @Post('register')
+  async register(@Body() data: CreateUserDto) {
+    data.password = await this.crypto.hash(data.password);
+    return this.usersService.create(data);
   }
 
   @Get()
@@ -64,8 +75,10 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+  update(@Param('id') id: string, @Body() data: UpdateUserDto) {
+    if (data.password) {
+    }
+    return this.usersService.update(id, data);
   }
 
   @Delete(':id')
