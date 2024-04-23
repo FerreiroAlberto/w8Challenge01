@@ -6,7 +6,7 @@ export class UpdatePetDto extends PartialType(CreatePetDto) {
   @IsString()
   email?: string;
   @IsNumber()
-  age: number;
+  age?: number;
   @IsString()
-  userId: string;
+  userId?: string;
 }

@@ -23,6 +23,7 @@ export class UsersService {
   async create(data: CreateUserDto) {
     return this.prisma.user.create({
       data,
+      select,
     });
   }
 
@@ -55,12 +56,12 @@ export class UsersService {
     return user.password;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
-    const data = updateUserDto;
+  async update(id: string, data: UpdateUserDto) {
     try {
       return await this.prisma.user.update({
         where: { id },
         data,
+        select,
       });
     } catch (error) {
       throw new NotFoundException(`User ${id} not found`);
@@ -71,6 +72,7 @@ export class UsersService {
     try {
       return await this.prisma.user.delete({
         where: { id },
+        select,
       });
     } catch (error) {
       throw new NotFoundException(`User ${id} not found`);

@@ -3,6 +3,14 @@ import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
+const select = {
+  id: true,
+  name: true,
+  species: true,
+  age: true,
+  user: { select: { id: true, email: true, role: true } },
+};
+
 @Injectable()
 export class PetsService {
   constructor(private prisma: PrismaService) {}
@@ -13,12 +21,13 @@ export class PetsService {
   }
 
   async findAll() {
-    return this.prisma.pet.findMany();
+    return this.prisma.pet.findMany({ select });
   }
 
   async findOne(id: string) {
     const pet = await this.prisma.pet.findUnique({
       where: { id },
+      select,
     });
 
     if (!pet) {
@@ -34,6 +43,7 @@ export class PetsService {
       return await this.prisma.pet.update({
         where: { id },
         data,
+        select,
       });
     } catch (error) {
       throw new NotFoundException(`Pet ${id} not found`);
@@ -44,6 +54,7 @@ export class PetsService {
     try {
       return await this.prisma.pet.delete({
         where: { id },
+        select,
       });
     } catch (error) {
       throw new NotFoundException(`Pet ${id} not found`);
